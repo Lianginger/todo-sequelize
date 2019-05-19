@@ -13,32 +13,95 @@ router.get('/', (req, res) => {
 
 // 新增一筆 Todo 頁面
 router.get('/new', (req, res) => {
-  res.send('新增 Todo 頁面')
-})
-
-// 顯示一筆 Todo 的詳細內容
-router.get('/:id', (req, res) => {
-  res.send('顯示一筆 Todo')
+  res.render('new')
 })
 
 // 新增一筆  Todo
 router.post('/', (req, res) => {
-  res.send('新增一筆  Todo')
+  Todo.create({
+    name: req.body.name,
+    done: false,
+    UserId: req.user.id
+  })
+    .then(
+      res.redirect('/')
+    )
+    .catch(err => {
+      res.status(422).json(err)
+    })
+})
+
+// 顯示一筆 Todo 的詳細內容
+router.get('/:id', (req, res) => {
+  Todo.findOne({
+    where: {
+      userId: req.user.id,
+      id: req.params.id
+    }
+  })
+    .then(todo => {
+      res.render('detail', { todo })
+    })
+    .catch(error => {
+      res.status(422).json(error)
+    })
 })
 
 // 修改 Todo 頁面
 router.get('/:id/edit', (req, res) => {
-  res.send('修改 Todo 頁面')
+  Todo.findOne({
+    where: {
+      userId: req.user.id,
+      id: req.params.id
+    }
+  })
+    .then(todo => {
+      res.render('edit', { todo })
+    })
+    .catch(error => {
+      res.status(422).json(error)
+    })
 })
 
 // 修改 Todo
 router.put('/:id', (req, res) => {
-  res.send('修改 Todo')
+  Todo.findOne({
+    where: {
+      userId: req.user.id,
+      id: req.params.id
+    }
+  })
+    .then(todo => {
+      todo.name = req.body.name
+      if (req.body.done === 'on') {
+        todo.done = true
+      } else {
+        todo.done = false
+      }
+      todo.save()
+        .then(todo => {
+          res.redirect(`/todos/${todo.id}`)
+        })
+        .catch(error => {
+          res.status(422).json(error)
+        })
+    })
 })
 
 // 刪除 Todo
 router.delete('/:id/delete', (req, res) => {
-  res.send('刪除 Todo')
+  Todo.destroy({
+    where: {
+      userId: req.user.id,
+      id: req.params.id
+    }
+  })
+    .then(
+      res.redirect('/')
+    )
+    .catch(error => {
+      res.status(422).json(error)
+    })
 })
 
 module.exports = router
